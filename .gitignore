@@ -1,0 +1,6 @@
+/.ipynb*
+*test*
+__pycache__
+data.json
+*checkpoints*
+*.lock

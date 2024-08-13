@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taipei Cafe</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <style>
+        table,
+        thead,
+        th,
+        tbody,
+        tr,
+        td {
+            border: 1px solid;
+        }
+
+        #map {
+            height: 640px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <button id="btn_request">取得咖啡廳列表</button>
+    <table>
+        <thead>
+            <td>id</td>
+            <td>city</td>
+            <td>name</td>
+            <td>address</td>
+            <td>url</td>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+    <script>
+        var map = L.map('map').setView([25.0339145, 121.5412233], 13);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        let layerGroup = null;
+        let arrMarkers = [];
+
+        document.querySelector("button#btn_request").addEventListener("click", function(event){
+            fetch("http://192.168.1.104:5000/cafe_taipei",{
+                method: "GET",
+            }).then(function(response){
+                return response.json();
+            }).then(function (arr){
+                console.log(arr)
+
+                // init markers
+                if(layerGroup != null && map.hasLayer(layerGroup)){
+                    layerGroup.clearLayers();
+                    map.removeLayer(layerGroup);
+
+                    let layerGroup = null;
+                    let arrMarkers = [];
+                }
+
+                let body = document.querySelector('table tbody')
+                tbody.innerHTML = ' ';
+
+                // generate map on website
+                for (let o of arr){
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${o["id"]}</td>
+                    <td>${o["city"]}</td>
+                    <td>${o["name"]}</td>
+                    <td>${o["address"]}</td>
+                    <td><a href="${o["url"]}" target = "_blank">連結</a></td>`;
+                    tbody.appendChild(tr)
+
+                    let marker = L.marker([o['latitude'], o['longitude']]).bindPopup(`${o['name']}<br><a href="${o["url"]}" target = "_blank">連結</a>`);
+
+                    // setting event
+                    marker.addEventListener("click", function(event){
+                        console.log(o)
+                    });
+                    arrMarkers.push(marker)
+                };
+                layerGroup = L.layerGroup(arrMarkers);
+                layerGroup.addTo(map)
+            });
+        });
+    </script>
+</body>
+</html>
